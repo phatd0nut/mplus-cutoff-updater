@@ -83,8 +83,7 @@ async function sendMythicPlusCutoffToDiscord() {
                     { name: "🥈 Top 1% Score", value: p990Data.quantileMinValue.toFixed(2), inline: true },
                     { name: "👥 Top 0.1% Population", value: p999Data.quantilePopulationCount.toLocaleString(), inline: true },
                     { name: "👥 Top 1% Population", value: p990Data.quantilePopulationCount.toLocaleString(), inline: true },
-                    { name: "📊 Total Population", value: p999Data.totalPopulationCount.toLocaleString(), inline: true },
-                    { name: "🕐 Last Updated", value: updatedAt, inline: false }
+                    { name: "📊 Total Population", value: p999Data.totalPopulationCount.toLocaleString(), inline: true }
                 ],
                 timestamp: new Date().toISOString(),
                 footer: { text: "Raider.IO Mythic+ Cutoffs" }
