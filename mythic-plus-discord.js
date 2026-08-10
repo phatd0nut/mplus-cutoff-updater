@@ -1,7 +1,7 @@
 const https = require('https');
 
 const ACCESS_KEY = process.env.RAIDER_IO_ACCESS_KEY;
-const REGION = process.env.REGION || 'eu';
+const REGION = 'eu'; // Change this to your desired region (e.g., 'us', 'eu', 'kr', 'tw', 'cn')
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 // 10 = The War Within. Safe historical floor to start probing from — raising
 // it just saves a couple of requests, it's never required for correctness.
