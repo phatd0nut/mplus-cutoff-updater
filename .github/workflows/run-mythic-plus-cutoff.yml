@@ -1,0 +1,23 @@
+name: Run Mythic+ Cutoff Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */12 * * *' # every 12 hours
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Mythic+ cutoff script
+        env:
+          RAIDER_IO_ACCESS_KEY: ${{ secrets.RAIDER_IO_ACCESS_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REGION: 'eu'
+        run: |
+          node mythic-plus-discord.js
