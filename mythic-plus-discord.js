@@ -1,4 +1,6 @@
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
 const ACCESS_KEY = process.env.RAIDER_IO_ACCESS_KEY;
 const REGION = 'eu'; // Change this to your desired region (e.g., 'us', 'eu', 'kr', 'tw', 'cn')
@@ -6,6 +8,7 @@ const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 // 10 = The War Within. Safe historical floor to start probing from — raising
 // it just saves a couple of requests, it's never required for correctness.
 const EXPANSION_ID_FLOOR = Number(process.env.EXPANSION_ID_FLOOR || '10');
+const STATE_FILE = path.join(__dirname, 'last-cutoff.json');
 
 if (!ACCESS_KEY) {
     console.error('Missing RAIDER_IO_ACCESS_KEY environment variable.');
@@ -63,6 +66,12 @@ async function sendMythicPlusCutoffToDiscord() {
         const region = cutoffs.region.name;
         const updatedAt = cutoffs.updatedAt;
 
+        const lastSeenUpdatedAt = readLastSeenUpdatedAt();
+        if (lastSeenUpdatedAt === updatedAt) {
+            console.log(`No new score yet (still ${updatedAt}) — skipping Discord notification.`);
+            return;
+        }
+
         // Build Discord embed payload
         const discordPayload = {
             embeds: [{
@@ -84,6 +93,7 @@ async function sendMythicPlusCutoffToDiscord() {
 
         // Send to Discord
         await sendToDiscord(WEBHOOK_URL, discordPayload);
+        writeLastSeenUpdatedAt(updatedAt);
         console.log("✅ Discord webhook notification sent successfully!");
         console.log(`Top 0.1%: ${p999Data.quantileMinValue.toFixed(2)} | Top 1%: ${p990Data.quantileMinValue.toFixed(2)} | Region: ${region}`);
 
@@ -91,6 +101,18 @@ async function sendMythicPlusCutoffToDiscord() {
         console.error("❌ Error:", error.message);
         process.exit(1);
     }
+}
+
+function readLastSeenUpdatedAt() {
+    try {
+        return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')).updatedAt;
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeLastSeenUpdatedAt(updatedAt) {
+    fs.writeFileSync(STATE_FILE, JSON.stringify({ updatedAt }, null, 2));
 }
 
 // Helper function to make HTTPS GET requests
