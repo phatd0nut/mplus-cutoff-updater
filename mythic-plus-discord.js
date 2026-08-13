@@ -64,11 +64,13 @@ async function sendMythicPlusCutoffToDiscord() {
         const p999Data = cutoffs.p999.all;
         const p990Data = cutoffs.p990.all;
         const region = cutoffs.region.name;
-        const updatedAt = cutoffs.updatedAt;
 
-        const lastSeenUpdatedAt = readLastSeenUpdatedAt();
-        if (lastSeenUpdatedAt === updatedAt) {
-            console.log(`No new score yet (still ${updatedAt}) — skipping Discord notification.`);
+        const p999Score = p999Data.quantileMinValue;
+        const p990Score = p990Data.quantileMinValue;
+
+        const lastSeenScores = readLastSeenScores();
+        if (lastSeenScores && lastSeenScores.p999Score === p999Score && lastSeenScores.p990Score === p990Score) {
+            console.log(`No new score yet (still ${p999Score} / ${p990Score}) — skipping Discord notification.`);
             return;
         }
 
@@ -92,7 +94,7 @@ async function sendMythicPlusCutoffToDiscord() {
 
         // Send to Discord
         await sendToDiscord(WEBHOOK_URL, discordPayload);
-        writeLastSeenUpdatedAt(updatedAt);
+        writeLastSeenScores(p999Score, p990Score);
         console.log("✅ Discord webhook notification sent successfully!");
         console.log(`Top 0.1%: ${p999Data.quantileMinValue.toFixed(2)} | Top 1%: ${p990Data.quantileMinValue.toFixed(2)} | Region: ${region}`);
 
@@ -102,16 +104,20 @@ async function sendMythicPlusCutoffToDiscord() {
     }
 }
 
-function readLastSeenUpdatedAt() {
+function readLastSeenScores() {
     try {
-        return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')).updatedAt;
+        const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+        if (typeof data.p999Score === 'number' && typeof data.p990Score === 'number') {
+            return { p999Score: data.p999Score, p990Score: data.p990Score };
+        }
+        return null;
     } catch (error) {
         return null;
     }
 }
 
-function writeLastSeenUpdatedAt(updatedAt) {
-    fs.writeFileSync(STATE_FILE, JSON.stringify({ updatedAt }, null, 2));
+function writeLastSeenScores(p999Score, p990Score) {
+    fs.writeFileSync(STATE_FILE, JSON.stringify({ p999Score, p990Score }, null, 2));
 }
 
 // Helper function to make HTTPS GET requests
